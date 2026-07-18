@@ -14,7 +14,8 @@ npm run dev
 
 | Variable | Where to get it |
 |---|---|
-| `MONGODB_URI` | MongoDB Atlas connection string |
+| `MONGODB_URI` | MongoDB connection string; include a database name like `mongodb://localhost:27017/scholarai` or `mongodb+srv://user:pass@cluster.mongodb.net/scholarai` |
+| `MONGODB_DB_NAME` | optional if `MONGODB_URI` does not already include a database name; sets the DB name used by Mongoose and Better Auth |
 | `BETTER_AUTH_SECRET` | any long random string (`openssl rand -base64 32`) |
 | `GOOGLE_CLIENT_ID` / `SECRET` | Google Cloud Console → OAuth 2.0 Client → redirect URI: `http://localhost:5000/api/auth/callback/google` |
 | `CLOUDINARY_*` | cloudinary.com dashboard |

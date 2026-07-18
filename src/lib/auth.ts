@@ -6,6 +6,8 @@ import type { Db } from "mongodb";
 // needs the raw MongoDB `Db` instance, not a mongoose connection.
 export function createAuth(db: Db) {
   return betterAuth({
+    // The installed Better Auth Mongo adapter only accepts the db instance
+    // and optional adapter config; the database name is taken from the db.
     database: mongodbAdapter(db),
 
     secret: process.env.BETTER_AUTH_SECRET,

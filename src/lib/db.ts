@@ -11,7 +11,8 @@ export async function connectDB(): Promise<void> {
   }
 
   try {
-    await mongoose.connect(uri);
+    const dbName = process.env.DATABASE_NAME;
+    await mongoose.connect(uri, dbName ? { dbName } : undefined);
     isConnected = true;
     console.log("✅ MongoDB connected");
   } catch (err) {
@@ -25,5 +26,5 @@ export async function connectDB(): Promise<void> {
 // instead of opening a second one.
 export function getMongoClientDb() {
   const client = mongoose.connection.getClient();
-  return client.db();
+  return client.db(process.env.DATABASE_NAME as string);
 }
