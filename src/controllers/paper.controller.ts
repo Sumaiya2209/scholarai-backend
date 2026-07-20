@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { Paper } from "../models/Paper";
-import { ChatMessage } from "../models/ChatMessage";
-import { asyncHandler } from "../utils/asyncHandler";
-import { uploadPdfBuffer } from "../utils/cloudinary";
-import { extractPdfText } from "../utils/pdfExtract";
+import { Paper } from "../models/Paper.js";
+import { ChatMessage } from "../models/ChatMessage.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadPdfBuffer } from "../utils/cloudinary.js";
+import { extractPdfText } from "../utils/pdfExtract.js";
 
 /**
  * POST /api/papers  (protected)

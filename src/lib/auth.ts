@@ -1,5 +1,3 @@
-import { betterAuth } from "better-auth";
-import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import type { Db } from "mongodb";
 
 const clientOrigin = process.env.CLIENT_URL || "http://localhost:3000";
@@ -8,7 +6,11 @@ const isProduction = process.env.NODE_ENV === "production";
 
 // We create Better Auth AFTER mongoose connects (see server.ts), because it
 // needs the raw MongoDB `Db` instance, not a mongoose connection.
-export function createAuth(db: Db) {
+export async function createAuth(db: Db) {
+  const [{ betterAuth }, { mongodbAdapter }] = await Promise.all([
+    import("better-auth"),
+    import("better-auth/adapters/mongodb"),
+  ]);
   return betterAuth({
     // The installed Better Auth Mongo adapter only accepts the db instance
     // and optional adapter config; the database name is taken from the db.
@@ -59,7 +61,7 @@ export function createAuth(db: Db) {
   });
 }
 
-export type Auth = ReturnType<typeof createAuth>;
+export type Auth = Awaited<ReturnType<typeof createAuth>>;
 
 // Simple singleton so middleware/controllers (loaded before Mongo connects)
 // can still access the auth instance once it's ready.

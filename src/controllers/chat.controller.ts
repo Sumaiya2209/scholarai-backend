@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { Paper } from "../models/Paper";
-import { ChatMessage } from "../models/ChatMessage";
-import { asyncHandler } from "../utils/asyncHandler";
-import { chatAboutPaper } from "../lib/ai";
-import { trimForContext } from "../utils/pdfExtract";
+import { Paper } from "../models/Paper.js";
+import { ChatMessage } from "../models/ChatMessage.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { chatAboutPaper } from "../lib/ai.js";
+import { trimForContext } from "../utils/pdfExtract.js";
 
 /**
  * GET /api/chat/:paperId  (protected)

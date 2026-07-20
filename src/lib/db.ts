@@ -1,30 +1,39 @@
 import mongoose from "mongoose";
 
-let isConnected = false;
+// Cache the CONNECTION PROMISE (not just a boolean) so that concurrent
+// requests hitting a cold serverless instance at the same time all await
+// the same in-flight connect() call instead of racing to start their own —
+// that race is what was causing "buffering timed out" errors on Vercel.
+let connectionPromise: Promise<typeof mongoose> | null = null;
 
 export async function connectDB(): Promise<void> {
-  if (isConnected) return;
+  if (mongoose.connection.readyState === 1) return; // already connected
 
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    throw new Error("MONGODB_URI is missing in .env");
+  if (!connectionPromise) {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+      throw new Error("MONGODB_URI is missing in .env");
+    }
+
+    connectionPromise = mongoose
+      .connect(uri, {
+        serverSelectionTimeoutMS: 10000,
+      })
+      .then((m) => {
+        console.log("✅ MongoDB connected");
+        return m;
+      })
+      .catch((err) => {
+        connectionPromise = null; // allow the next request to retry instead of staying broken forever
+        console.error("❌ MongoDB connection failed:", err);
+        throw err;
+      });
   }
 
-  try {
-    const dbName = process.env.DATABASE_NAME;
-    await mongoose.connect(uri, dbName ? { dbName } : undefined);
-    isConnected = true;
-    console.log("✅ MongoDB connected");
-  } catch (err) {
-    console.error("❌ MongoDB connection failed:", err);
-    process.exit(1);
-  }
+  await connectionPromise;
 }
 
-// Better Auth needs the raw mongodb driver Db instance.
-// Mongoose keeps the underlying MongoClient, so we reuse the SAME connection
-// instead of opening a second one.
 export function getMongoClientDb() {
   const client = mongoose.connection.getClient();
-  return client.db(process.env.DATABASE_NAME as string);
+  return client.db();
 }

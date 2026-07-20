@@ -1,6 +1,13 @@
-// pdf-parse doesn't ship types that play well with strict TS + require(),
-// so we require it directly.
-const pdfParse = require("pdf-parse");
+// pdf-parse doesn't ship types that play well with strict TS; import lazily
+let pdfParse: any = null;
+
+async function loadPdfParse() {
+  if (!pdfParse) {
+    const mod = await import("pdf-parse");
+    pdfParse = mod?.default ?? mod;
+  }
+  return pdfParse;
+}
 
 /**
  * Extracts raw text from a PDF buffer. This text is stored on the Paper doc
@@ -9,7 +16,8 @@ const pdfParse = require("pdf-parse");
  */
 export async function extractPdfText(buffer: Buffer): Promise<string> {
   try {
-    const data = await pdfParse(buffer);
+    const lib = await loadPdfParse();
+    const data = await lib(buffer);
     return typeof data?.text === "string" ? data.text.trim() : "";
   } catch (error) {
     console.warn("PDF text extraction failed; continuing with empty text.", error);

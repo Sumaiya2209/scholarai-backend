@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "ScholarAI backend - research paper platform with AI summarization and chat",
   "main": "dist/server.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/server.ts",
+    "dev": "nodemon --watch src --ext ts --exec \"node --loader ts-node/esm src/server.ts\"",
     "build": "tsc",
     "start": "node dist/server.js",
-    "seed": "ts-node src/seed.ts"
+    "seed": "node --loader ts-node/esm src/seed.ts"
   },
   "dependencies": {
     "better-auth": "^1.4.2",
@@ -19,7 +19,8 @@
     "groq-sdk": "^0.9.1",
     "mongoose": "^8.9.5",
     "multer": "^2.0.1",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "@vercel/node": "^3.2.24"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

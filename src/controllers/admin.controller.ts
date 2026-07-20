@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import { Paper } from "../models/Paper";
-import { asyncHandler } from "../utils/asyncHandler";
-import { generatePaperSummary } from "../lib/ai";
-import { trimForContext } from "../utils/pdfExtract";
+import { Paper } from "../models/Paper.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { generatePaperSummary } from "../lib/ai.js";
+import { trimForContext } from "../utils/pdfExtract.js";
 
 export const listPendingPapers = asyncHandler(async (_req: Request, res: Response) => {
   const papers = await Paper.find({ status: "pending" })

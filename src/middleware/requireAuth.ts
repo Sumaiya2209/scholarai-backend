@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { fromNodeHeaders } from "better-auth/node";
-import { getAuthInstance } from "../lib/auth";
+import { getAuthInstance } from "../lib/auth.js";
 
 // Extend Express's Request type so controllers get typed access to req.user
 declare global {
@@ -23,6 +22,7 @@ declare global {
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
     const auth = getAuthInstance();
+    const { fromNodeHeaders } = await import("better-auth/node");
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers),
     });

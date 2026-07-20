@@ -1,4 +1,7 @@
-import { Schema, model, Document, Types } from "mongoose";
+import mongoose from "mongoose";
+import type { Document, Types } from "mongoose";
+
+const { Schema, model } = mongoose;
 
 export interface IChatMessage extends Document {
   paperId: Types.ObjectId;

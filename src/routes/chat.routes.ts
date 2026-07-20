@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/requireAuth";
-import { getChatHistory, sendChatMessage } from "../controllers/chat.controller";
+import { requireAuth } from "../middleware/requireAuth.js";
+import { getChatHistory, sendChatMessage } from "../controllers/chat.controller.js";
 
 const router = Router();
 

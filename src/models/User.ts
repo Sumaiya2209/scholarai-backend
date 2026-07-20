@@ -1,4 +1,7 @@
-import { Schema, model, models } from "mongoose";
+import mongoose from "mongoose";
+import type { Schema as MongooseSchema } from "mongoose";
+
+const { Schema, model, models } = mongoose;
 
 // Better Auth manages the "user" collection via the raw MongoDB driver, not
 // Mongoose — so Mongoose never registers a model for it, and any
@@ -14,4 +17,4 @@ const userSchema = new Schema(
   { collection: "user", strict: false }
 );
 
-export const User = models.User || model("User", userSchema);
+export const User = (models as any).User || model("User", userSchema);

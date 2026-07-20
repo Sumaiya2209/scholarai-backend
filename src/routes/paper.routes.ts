@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/requireAuth";
-import { uploadPdf } from "../middleware/upload";
+import { requireAuth } from "../middleware/requireAuth.js";
+import { uploadPdf } from "../middleware/upload.js";
 import {
   createPaper,
   listPapers,
@@ -9,7 +9,7 @@ import {
   deletePaper,
   getPlatformStats,
   getRelatedPapers,
-} from "../controllers/paper.controller";
+} from "../controllers/paper.controller.js";
 
 const router = Router();
 

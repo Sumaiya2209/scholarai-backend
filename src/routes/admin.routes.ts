@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { requireAuth, requireAdmin } from "../middleware/requireAuth";
+import { requireAuth, requireAdmin } from "../middleware/requireAuth.js";
 import {
   listPendingPapers,
   listAllPapersAdmin,
   getAdminStats,
   approvePaper,
   rejectPaper,
-} from "../controllers/admin.controller";
+} from "../controllers/admin.controller.js";
 
 const router = Router();
 

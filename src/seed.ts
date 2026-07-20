@@ -2,9 +2,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import mongoose from "mongoose";
-import { connectDB, getMongoClientDb } from "./lib/db";
-import { createAuth } from "./lib/auth";
-import { Paper } from "./models/Paper";
+import { connectDB, getMongoClientDb } from "./lib/db.js";
+import { createAuth } from "./lib/auth.js";
+import { Paper } from "./models/Paper.js";
 
 const DEMO_USER = { name: "Demo Student", email: "demo@scholarai.com", password: "Demo1234!" };
 const ADMIN_USER = { name: "Admin", email: "admin@scholarai.com", password: "Admin1234!" };
@@ -100,7 +100,7 @@ const PLACEHOLDER_PDF = "https://res.cloudinary.com/demo/raw/upload/sample.pdf";
 
 async function seed() {
   await connectDB();
-  const auth = createAuth(getMongoClientDb());
+  const auth = await createAuth(getMongoClientDb());
 
   console.log("Seeding demo user...");
   const demoResult = await auth.api.signUpEmail({ body: DEMO_USER }).catch(() => null);

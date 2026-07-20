@@ -1,6 +1,16 @@
-import Groq from "groq-sdk";
+let groq: any = null;
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+async function getGroqClient() {
+  if (groq) return groq;
+  const mod = await import("groq-sdk");
+  const Groq = ((mod as any)?.default ?? mod) as any;
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error("GROQ_API_KEY environment variable is required for AI features");
+  }
+  groq = new Groq({ apiKey });
+  return groq;
+}
 
 // Fast + free-tier friendly model on Groq. Swap here if you need a
 // different one later — nothing else in the codebase needs to change.
@@ -16,7 +26,8 @@ interface SummaryResult {
  * returns a summary + bullet key points as structured JSON.
  */
 export async function generatePaperSummary(paperText: string): Promise<SummaryResult> {
-  const completion = await groq.chat.completions.create({
+  const client = await getGroqClient();
+  const completion = await client.chat.completions.create({
     model: MODEL,
     temperature: 0.3,
     response_format: { type: "json_object" },
@@ -59,7 +70,8 @@ export async function chatAboutPaper(
   history: ChatTurn[],
   question: string
 ): Promise<string> {
-  const completion = await groq.chat.completions.create({
+  const client = await getGroqClient();
+  const completion = await client.chat.completions.create({
     model: MODEL,
     temperature: 0.4,
     messages: [
