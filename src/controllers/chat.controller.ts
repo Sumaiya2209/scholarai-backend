@@ -47,22 +47,23 @@ export const sendChatMessage = asyncHandler(async (req: Request, res: Response) 
     .reverse()
     .map((m) => ({ role: m.role, content: m.content }));
 
+  // Save the user's message first — guarantees correct chronological order,
+  // and means the question isn't lost even if the AI call below fails.
+  const userMsg = await ChatMessage.create({
+    paperId: paper._id,
+    userId: req.user!.id,
+    role: "user",
+    content: message,
+  });
+
   const aiReply = await chatAboutPaper(trimForContext(paper.extractedText), history, message);
 
-  const [userMsg, assistantMsg] = await Promise.all([
-    ChatMessage.create({
-      paperId: paper._id,
-      userId: req.user!.id,
-      role: "user",
-      content: message,
-    }),
-    ChatMessage.create({
-      paperId: paper._id,
-      userId: req.user!.id,
-      role: "assistant",
-      content: aiReply,
-    }),
-  ]);
+  const assistantMsg = await ChatMessage.create({
+    paperId: paper._id,
+    userId: req.user!.id,
+    role: "assistant",
+    content: aiReply,
+  });
 
   res.json({ userMessage: userMsg, assistantMessage: assistantMsg });
 });

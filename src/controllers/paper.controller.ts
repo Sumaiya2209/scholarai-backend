@@ -46,6 +46,7 @@ export const listPapers = asyncHandler(async (req: Request, res: Response) => {
   const {
     search = "",
     field = "",
+    dateRange = "",
     sort = "newest",
     page = "1",
     limit = "12",
@@ -59,35 +60,40 @@ export const listPapers = asyncHandler(async (req: Request, res: Response) => {
   if (field) {
     query.field = field;
   }
+  if (dateRange) {
+    const days: Record<string, number> = { week: 7, month: 30, year: 365 };
+    if (days[dateRange]) {
+      query.createdAt = { $gte: new Date(Date.now() - days[dateRange] * 24 * 60 * 60 * 1000) };
+    }
+  }
 
-  const sortMap: Record<string, any> = {
-    newest: { createdAt: -1 },
-    oldest: { createdAt: 1 },
-    mostViewed: { views: -1 },
-  };
+  // Sorting
+  const sortObj = (sort === "oldest" ? { createdAt: 1 } : sort === "popular" ? { views: -1 } : { createdAt: -1 }) as Record<string, 1 | -1>;
 
-  const pageNum = Math.max(parseInt(page, 10) || 1, 1);
-  const limitNum = Math.min(parseInt(limit, 10) || 12, 50);
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 12));
 
   const [papers, total] = await Promise.all([
     Paper.find(query)
-      .sort(sortMap[sort] || sortMap.newest)
+      .sort(sortObj as any)
       .skip((pageNum - 1) * limitNum)
       .limit(limitNum)
-      .select("-extractedText"), // no need to ship full paper text to list view
+      .select("-extractedText"),
     Paper.countDocuments(query),
   ]);
 
   res.json({
     papers,
     pagination: {
-      total,
       page: pageNum,
+      limit: limitNum,
+      total,
       totalPages: Math.ceil(total / limitNum),
-      hasMore: pageNum * limitNum < total,
     },
   });
+
 });
+
 
 /**
  * GET /api/papers/mine  (protected)
@@ -173,7 +179,7 @@ export const getRelatedPapers = asyncHandler(async (req: Request, res: Response)
  * no hardcoded/dummy figures.
  */
 export const getPlatformStats = asyncHandler(async (_req: Request, res: Response) => {
-  const [approvedPapers, fieldsAgg, viewsAgg, summariesGenerated] = await Promise.all([
+  const [approvedPapers, fieldsAgg, viewsAgg, summariesGenerated, fieldBreakdown] = await Promise.all([
     Paper.countDocuments({ status: "approved" }),
     Paper.distinct("field", { status: "approved" }),
     Paper.aggregate([
@@ -181,6 +187,11 @@ export const getPlatformStats = asyncHandler(async (_req: Request, res: Response
       { $group: { _id: null, total: { $sum: "$views" } } },
     ]),
     Paper.countDocuments({ status: "approved", aiSummary: { $exists: true, $ne: "" } }),
+    Paper.aggregate([
+      { $match: { status: "approved" } },
+      { $group: { _id: "$field", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]),
   ]);
 
   res.json({
@@ -188,5 +199,6 @@ export const getPlatformStats = asyncHandler(async (_req: Request, res: Response
     fieldsCount: fieldsAgg.length,
     totalViews: viewsAgg[0]?.total || 0,
     summariesGenerated,
+    fieldBreakdown: fieldBreakdown.map((f) => ({ field: f._id, count: f.count })),
   });
 });

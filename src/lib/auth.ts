@@ -2,6 +2,10 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import type { Db } from "mongodb";
 
+const clientOrigin = process.env.CLIENT_URL || "http://localhost:3000";
+const authBaseUrl = process.env.BETTER_AUTH_URL || "http://localhost:5000";
+const isProduction = process.env.NODE_ENV === "production";
+
 // We create Better Auth AFTER mongoose connects (see server.ts), because it
 // needs the raw MongoDB `Db` instance, not a mongoose connection.
 export function createAuth(db: Db) {
@@ -11,9 +15,9 @@ export function createAuth(db: Db) {
     database: mongodbAdapter(db),
 
     secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL,
+    baseURL: authBaseUrl,
 
-    trustedOrigins: [process.env.CLIENT_URL || "http://localhost:3000"],
+    trustedOrigins: [clientOrigin, authBaseUrl].filter(Boolean),
 
     emailAndPassword: {
       enabled: true,
@@ -22,6 +26,7 @@ export function createAuth(db: Db) {
 
     socialProviders: {
       google: {
+        enabled: true,
         clientId: process.env.GOOGLE_CLIENT_ID as string,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       },
@@ -47,8 +52,8 @@ export function createAuth(db: Db) {
 
     advanced: {
       defaultCookieAttributes: {
-        sameSite: "none",
-        secure: true,
+        sameSite: isProduction ? "none" : "lax",
+        secure: isProduction,
       },
     },
   });

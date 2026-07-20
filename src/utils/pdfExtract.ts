@@ -8,8 +8,13 @@ const pdfParse = require("pdf-parse");
  * parse the PDF once (at upload time).
  */
 export async function extractPdfText(buffer: Buffer): Promise<string> {
-  const data = await pdfParse(buffer);
-  return data.text.trim();
+  try {
+    const data = await pdfParse(buffer);
+    return typeof data?.text === "string" ? data.text.trim() : "";
+  } catch (error) {
+    console.warn("PDF text extraction failed; continuing with empty text.", error);
+    return "";
+  }
 }
 
 /**
