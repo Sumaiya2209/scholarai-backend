@@ -1,12 +1,10 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import { Paper } from "../models/Paper";
 import { asyncHandler } from "../utils/asyncHandler";
 import { generatePaperSummary } from "../lib/ai";
 import { trimForContext } from "../utils/pdfExtract";
 
-/**
- * GET /api/admin/papers/pending  (admin only)
- */
 export const listPendingPapers = asyncHandler(async (_req: Request, res: Response) => {
   const papers = await Paper.find({ status: "pending" })
     .sort({ createdAt: 1 })
@@ -15,11 +13,67 @@ export const listPendingPapers = asyncHandler(async (_req: Request, res: Respons
   res.json({ papers });
 });
 
-/**
- * PATCH /api/admin/papers/:id/approve  (admin only)
- * Approving a paper also triggers AI summarization (Document Intelligence
- * feature) so the details page has a summary the moment it goes public.
- */
+
+export const listAllPapersAdmin = asyncHandler(async (req, res) => {
+  try {
+    console.log("Admin papers API called");
+
+    const { status = "", page = "1", limit = "15" } = req.query as Record<string, string>;
+
+  const query: Record<string, any> = {};
+  if (status && status !== "all") {
+    query.status = status;
+  }
+
+  const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+  const limitNum = Math.min(parseInt(limit, 10) || 15, 50);
+
+  const [papers, total] = await Promise.all([
+    Paper.find(query)
+      .sort({ createdAt: -1 })
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum)
+      .populate("uploadedBy", "name email")
+      .select("-extractedText"),
+    Paper.countDocuments(query),
+  ]);
+
+  res.json({
+    papers,
+    pagination: { total, page: pageNum, totalPages: Math.ceil(total / limitNum) },
+  });
+
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+});
+
+
+export const getAdminStats = asyncHandler(async (_req: Request, res: Response) => {
+  const [totalPapers, pending, approved, rejected, totalUsers, fieldBreakdown] = await Promise.all([
+    Paper.countDocuments({}),
+    Paper.countDocuments({ status: "pending" }),
+    Paper.countDocuments({ status: "approved" }),
+    Paper.countDocuments({ status: "rejected" }),
+    mongoose.connection.collection("user").countDocuments({}),
+    Paper.aggregate([
+      { $match: { status: "approved" } },
+      { $group: { _id: "$field", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]),
+  ]);
+
+  res.json({
+    totalPapers,
+    pending,
+    approved,
+    rejected,
+    totalUsers,
+    fieldBreakdown: fieldBreakdown.map((f) => ({ field: f._id, count: f.count })),
+  });
+});
+
 export const approvePaper = asyncHandler(async (req: Request, res: Response) => {
   const paper = await Paper.findById(req.params.id);
   if (!paper) return res.status(404).json({ message: "Paper not found" });
@@ -32,8 +86,6 @@ export const approvePaper = asyncHandler(async (req: Request, res: Response) => 
     paper.aiSummary = summary;
     paper.aiKeyPoints = keyPoints;
   } catch (err) {
-    // Approval shouldn't fail just because the AI call hiccuped — log and
-    // let the summary be generated later via the retry endpoint.
     console.error("AI summary generation failed on approval:", err);
   }
 
@@ -41,9 +93,6 @@ export const approvePaper = asyncHandler(async (req: Request, res: Response) => 
   res.json({ message: "Paper approved", paper });
 });
 
-/**
- * PATCH /api/admin/papers/:id/reject  (admin only)
- */
 export const rejectPaper = asyncHandler(async (req: Request, res: Response) => {
   const { reason } = req.body;
   const paper = await Paper.findById(req.params.id);
@@ -55,3 +104,4 @@ export const rejectPaper = asyncHandler(async (req: Request, res: Response) => {
 
   res.json({ message: "Paper rejected", paper });
 });
+

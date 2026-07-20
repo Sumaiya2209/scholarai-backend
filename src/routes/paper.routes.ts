@@ -7,6 +7,7 @@ import {
   listMyPapers,
   getPaperById,
   deletePaper,
+  getPlatformStats,
   getRelatedPapers,
 } from "../controllers/paper.controller";
 
@@ -14,6 +15,7 @@ const router = Router();
 
 // Public
 router.get("/", listPapers);
+router.get("/stats", getPlatformStats);
 
 // Protected — must come BEFORE "/:id" so "mine" isn't parsed as an id
 router.get("/mine", requireAuth, listMyPapers);

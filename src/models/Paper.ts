@@ -1,5 +1,5 @@
 import { Schema, model, Document, Types } from "mongoose";
-
+import "./User"; // ensures the "User" model is registered before populate() is used
 export type PaperStatus = "pending" | "approved" | "rejected";
 
 export interface IPaper extends Document {
@@ -9,7 +9,7 @@ export interface IPaper extends Document {
   field: string; // e.g. "Computer Science", "Biology", "Economics"
   fileUrl: string; // Cloudinary PDF url
   extractedText: string; // raw text pulled from the PDF, used as AI chat context
-  uploadedBy: Types.ObjectId;
+  uploadedBy: { type: Schema.Types.ObjectId, required: true, ref: "User" },
   status: PaperStatus;
   rejectionReason?: string;
   aiSummary?: string;
@@ -28,7 +28,7 @@ const paperSchema = new Schema<IPaper>(
     field: { type: String, required: true, index: true },
     fileUrl: { type: String, required: true },
     extractedText: { type: String, default: "" },
-    uploadedBy: { type: Schema.Types.ObjectId, required: true, ref: "user" },
+    uploadedBy: { type: Schema.Types.ObjectId, required: true, ref: "User" },
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],
